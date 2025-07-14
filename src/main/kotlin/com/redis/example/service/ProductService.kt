@@ -7,6 +7,7 @@ import org.redisson.api.RedissonClient
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.concurrent.TimeUnit
 
 @Service
 class ProductService(
@@ -18,14 +19,6 @@ class ProductService(
     @Transactional
     fun decreaseQuantity(productId: Long, quantity: Long) {
         val product = productRepository.findByIdOrNull(productId)
-            ?: throw EntityNotFoundException("차감하려는 상품이 없습니다.")
-
-        product.decrease(quantity)
-    }
-
-    @Transactional
-    fun decreaseQuantityWithOptimisticLock(productId: Long, quantity: Long) {
-        val product = productRepository.findProductWithOptimisticLock(productId)
             ?: throw EntityNotFoundException("차감하려는 상품이 없습니다.")
 
         product.decrease(quantity)
@@ -46,9 +39,9 @@ class ProductService(
     fun decreaseQuantityWithRedissonLock(productId: Long, quantity: Long) {
         val lock = redissonClient.getLock(productId.toString())
 
-//        lock.tryLock(1000, 1000, java.util.concurrent.TimeUnit())
+        lock.tryLock(3, 3, TimeUnit.SECONDS)
 
-        val product = productRepository.findProductWithPessimisticLock(productId)
+        val product = productRepository.findByIdOrNull(productId)
             ?: throw EntityNotFoundException("차감하려는 상품이 없습니다.")
 
         product.decrease(quantity)
@@ -62,7 +55,7 @@ class ProductService(
     fun decreaseQuantityWithRedissonLockWithNewTransaction(productId: Long, quantity: Long) {
         val lock = redissonClient.getLock(productId.toString())
 
-//        lock.tryLock(1000, 1000, java.util.concurrent.TimeUnit())
+        lock.tryLock(3, 3, TimeUnit.SECONDS)
 
         transactionSupport.runWithNewTransaction {
             val product = productRepository.findProductWithPessimisticLock(productId)

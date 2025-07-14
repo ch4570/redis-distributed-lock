@@ -1,11 +1,6 @@
 package com.redis.example.entity
 
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.Table
-import jakarta.persistence.Version
+import jakarta.persistence.*
 
 @Entity
 @Table(name = "product")
@@ -19,9 +14,6 @@ class Product(
     val price: Long,
 
     var stock: Long = 0,
-
-    @Version
-    var version: Long = 0,
 
 ): BaseEntity() {
 
